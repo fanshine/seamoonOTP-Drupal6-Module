@@ -1,4 +1,7 @@
-seamoon-otp
+Drupal-Seamoon-OTP
 ===========
 
-Seamoon one time password token key support. Currently supported and tested: OTP TOKEN-KingKey 3000.
+Seamoon one time password token key module for Drupal 6. 
+
+Devices currently supported and tested:
+  OTP TOKEN-KingKey 3000.
