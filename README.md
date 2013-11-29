@@ -1,4 +1,4 @@
-Drupal-Seamoon-OTP
+SeamoonOTP Drupal6 Module
 ===========
 
 Seamoon one time password token key module for Drupal 6. 
