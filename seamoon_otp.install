@@ -1,0 +1,82 @@
+<?php
+// $Id: seamoon_otp.install
+
+function seamoon_otp_schema() {
+  
+  // Token SN seamoon_otp_sn information table
+  $schema['seamoon_otp_sn'] = array(
+    'description' => 'Stores the serial numbers data for Seamoon integration.',
+    'fields' => array(
+      'serial_number' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'length'  => '10'
+      ),
+      'serial_number_key' => array(
+        'type' => 'text',
+        'default' => ''
+      ),
+    ),
+    'primary key' => array('serial_number'),
+    'unique keys' => array(
+      'serial_number' => array('serial_number')
+    ),  
+  );
+
+  // Token SN users table: seamoon_otp_users
+  $schema['seamoon_otp_users'] = array(
+    'description' => 'Stores the join between SN and users.',
+    'fields' => array(
+      'kid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length'  => '10',
+      ),
+      'serial_number' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length'  => '10',
+      ),  
+      'auth_method' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length'  => '3',
+        'default' => '1',
+      ),  
+      'time' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length'  => '25',
+      ),    
+    ),
+    'primary key' => array('kid'),
+    'unique keys' => array(
+      'kid' => array('kid'),
+      'uid' => array('uid'),
+      'serial_number' => array('serial_number')
+    ),  
+  );
+
+  return $schema;
+}
+
+function seamoon_otp_install() {
+  // Create my tables.
+  drupal_install_schema('seamoon_otp');
+  drupal_set_message(t('Database tables for "Seamoon KeyGenerator OTP" module have been installed.'));
+}
+
+function seamoon_otp_uninstall() {
+  // Drop my tables.
+  // Take care of uninstall phase, because we can erase all associations between users and our serials key
+  drupal_uninstall_schema('seamoon_otp'); 
+  drupal_set_message(t('The "Seamoon KeyGenerator OTP" tables have been removed from the database'));
+  //variable_del('something');
+}
+

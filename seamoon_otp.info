@@ -1,0 +1,5 @@
+name = Seamoon OTP
+description = Seamoon one time password Token Key support.
+core = 6.x
+
+package = Access control

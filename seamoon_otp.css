@@ -1,0 +1,21 @@
+form#seamoon-otp-key-pair-form div.container-inline.otp-code,
+form#seamoon-otp-key-login-form div.container-inline.otp-code {
+padding: 0;
+position: relative;
+}
+form#seamoon-otp-key-pair-form .container-inline.otp-code fieldset div.form-item label,
+form#seamoon-otp-key-login-form .container-inline.otp-code fieldset div.form-item label {
+display: none;
+}
+form#seamoon-otp-key-pair-form #edit-serial-number-wrapper input.form-text.required,
+form#seamoon-otp-key-pair-form #edit-otp-code-wrapper input.form-text.required,
+form#seamoon-otp-key-login-form #edit-otp-code-wrapper input.form-text.required {
+text-align: center;
+font-size: 2em;
+padding: 0.3em;
+width: 200px;
+}
+form#seamoon-otp-key-login-form #edit-otp-code-wrapper {
+/*text-align: center;*/
+}
+form#seamoon-otp-key-login-form #edit-otp-code-wrapper input.form-text { }
