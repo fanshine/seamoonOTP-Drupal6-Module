@@ -15,14 +15,14 @@ function seamoon_otp_key_pair_form($form_value) {
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
   drupal_add_js(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.js');
 
-  drupal_set_title(t('!name - Pair your digital key', array('!name' => variable_get('seamoon_otp_name_sing_short', _SEAMOON_OTP_NAME_SING_SHORT))));
+  drupal_set_title(t('!name - Pair your digital key', array('!name' => variable_get('seamoon_otp_name_sing_short', _SEAMOON_OTP_NAME_SING_SHORT) ) ) );
   
   $seamoon_otp_intro = variable_get('seamoon_otp_intro', _SEAMOON_OTP_INTRO);
   $seamoon_otp_des_pair = variable_get('seamoon_otp_des_pair', _SEAMOON_OTP_DESCRIPTION);
   $switch_off = variable_get('seamoon_otp_switch_off', FALSE);
   
   $delta = $form_value['delta'];
-  
+
   $form['seamoon_otp_key_pair'] = array(
     '#type'          => 'fieldset',
     '#title'         => variable_get('seamoon_otp_name_sing_short', _SEAMOON_OTP_NAME_SING_SHORT),
@@ -30,20 +30,11 @@ function seamoon_otp_key_pair_form($form_value) {
     '#description'   => ($seamoon_otp_des_pair != '') ? "<p>" . t( $seamoon_otp_des_pair ) . "</p>" : '', 
     '#collapsible'   => FALSE,
   );
-
-  $form['seamoon_otp_key_pair']['firstname'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Firstname'), 
-    '#value' => $user->profile_firstname, 
-    '#size' => 30, 
-    '#maxlength' => 256, 
-    '#disabled' => TRUE,
-  );
   
-  $form['seamoon_otp_key_pair']['lastname'] = array(
+  $form['seamoon_otp_key_pair']['username'] = array(
     '#type' => 'textfield', 
-    '#title' => t('Lastname'), 
-    '#value' => $user->profile_lastname, 
+    '#title' => t('Username'), 
+    '#value' => $user->name, 
     '#size' => 30, 
     '#maxlength' => 256, 
     '#disabled' => TRUE,
@@ -80,7 +71,7 @@ function seamoon_otp_key_pair_form($form_value) {
   $form['seamoon_otp_key_pair']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Send and pair your key'),
-    '#suffix' => ($switch_off == 'mandatory') ? '<a href="/logout" class="close">' . t('Close') . '</a>' : '',
+    '#suffix' => ($switch_off == 'mandatory') ? '<a href="'. drupal_get_path_alias('logout') .'" class="close">' . t('Close') . '</a>' : '',
   );
   
   $form['#suffix'] = ($switch_off == 'mandatory') ? '<div id="seamoon-otp-key-overlay"></div>' : '';
@@ -249,7 +240,7 @@ function seamoon_otp_key_paired($form_state) {
   
   $brand_name_sing_short = variable_get('seamoon_otp_name_sing_short', _SEAMOON_OTP_NAME_SING_SHORT);
   $seamoon_otp_confirm_pair = variable_get('seamoon_otp_confirm_pair', _SEAMOON_OTP_CONFIRM_PAIR);
-  $seamoon_otp_url_formlogin = variable_get('seamoon_otp_url_formlogin', _SEAMOON_OTP_URL_FORMLOGIN);
+  $seamoon_otp_paired_redir = variable_get('seamoon_otp_paired_redir', _seamoon_otp_paired_redir);
     
   $lang = $language->language;
   
@@ -284,7 +275,7 @@ function seamoon_otp_key_paired($form_state) {
   
   }
   
-  $login = base_path() . $seamoon_otp_url_formlogin;
+  $login = base_path() . $seamoon_otp_paired_redir;
   
   $content.= '<p class="medium">' . t('Now, you can <a href="!login">login</a> again, to try the security login with Key.', array('!login' => $login)) . '</p>';
 

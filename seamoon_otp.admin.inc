@@ -1,19 +1,18 @@
 <?php
 /**
- * @file
  * Admin forms and pages.
+ * 
  */
- 
- 
+
 /**
  * Seamoon OTP config form
  */
 function seamoon_otp_admin_config(&$form_state) {
+
+  // Set title
   drupal_set_title(t('Seamoon OTP'));
   
   $form = array();
-  
-  //$form['#tree'] = TRUE;
   
   $form['seamoon_otp'] = array(
     '#type'          => 'fieldset',
@@ -26,7 +25,7 @@ function seamoon_otp_admin_config(&$form_state) {
     '#description'   => t('Activate the Seamoon OTP security function.'),
     '#type'          => 'checkboxes',
     '#options' => array('1' => t('Enable')),
-    '#default_value' => variable_get('seamoon_otp_active', 0),
+    '#default_value' => variable_get('seamoon_otp_active', array()),
   );
 
   $form['seamoon_otp']['seamoon_otp_switch_off'] = array(
@@ -34,16 +33,16 @@ function seamoon_otp_admin_config(&$form_state) {
     '#description'   => t('Switch off the normal login and activate the mandatory Seamoon OTP Key security for role users below.'),
     '#type'          => 'radios',
     '#options' => array('optional' => t('Optional'), 'mandatory' => t('Mandatory')),
-    '#default_value' => variable_get('seamoon_otp_switch_off', 0),
+    '#default_value' => variable_get('seamoon_otp_switch_off', 'optional'),
   );
 
-  $form['seamoon_otp']['seamoon_otp_url_formlogin'] = array(
+  $form['seamoon_otp']['seamoon_otp_paired_redir'] = array(
     '#title'         => t('URL to redirect users after correct pairing'),
     '#description'   => t('Leave empty for Homepage'),
     '#type'          => 'textfield',
   '#size'          => 30, 
   '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_url_formlogin', _SEAMOON_OTP_URL_FORMLOGIN),
+    '#default_value' => variable_get('seamoon_otp_paired_redir', _SEAMOON_OTP_PAIRED_REDIR),
   );
 
   $form['seamoon_otp']['seamoon_otp_login_redir'] = array(
@@ -51,7 +50,7 @@ function seamoon_otp_admin_config(&$form_state) {
     '#type'          => 'textfield',
   '#size'          => 30, 
   '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_login_redir', FALSE),
+    '#default_value' => variable_get('seamoon_otp_login_redir', _SEAMOON_OTP_LOGIN_REDIR),
   );
   
   $form['seamoon_otp']['seamoon_otp_roles'] = array(
@@ -63,7 +62,7 @@ function seamoon_otp_admin_config(&$form_state) {
 
   $form['seamoon_otp']['seamoon_otp_roles']['seamoon_otp_roles'] = array(
     '#title'         => t('Support for roles'),
-    '#description'   => t('Switch off the normal login and activate the mandatory Seamoon OTP Key security.'),
+    '#description'   => t('Select the roles that need to use the Seamoon OTP Key security.'),
     '#type'          => 'checkboxes',
     '#options' => _seamoon_otp_get_roles('all'),
     '#default_value' => variable_get('seamoon_otp_roles', array()),
@@ -80,36 +79,36 @@ function seamoon_otp_admin_config(&$form_state) {
     '#title'         => t('Brand\'s name of Seamoon OTP Key (singular)'),
     '#description'   => t('Personalize the name of Seamoon OTP Key term.'),
     '#type'          => 'textfield',
-  '#size'          => 30, 
-  '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_name', FALSE),
+    '#size'          => 30, 
+    '#maxlength'     => 64, 
+    '#default_value' => variable_get('seamoon_otp_name', _SEAMOON_OTP_NAME),
   );
 
   $form['seamoon_otp']['seamoon_otp_brand']['seamoon_otp_name_plur'] = array(
     '#title'         => t('Brand\'s name of Seamoon OTP Key (plural)'),
     '#description'   => t('Personalize the name of Seamoon OTP Key term.'),
     '#type'          => 'textfield',
-  '#size'          => 30, 
-  '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_name_plur', FALSE),
+    '#size'          => 30, 
+    '#maxlength'     => 64, 
+    '#default_value' => variable_get('seamoon_otp_name_plur', _SEAMOON_OTP_NAME_PLUR),
   );
 
   $form['seamoon_otp']['seamoon_otp_brand']['seamoon_otp_name_sing_short'] = array(
     '#title'         => t('Brand\'s name of Seamoon OTP Key (short singular)'),
     '#description'   => t('Personalize the name of Seamoon OTP Key term.'),
     '#type'          => 'textfield',
-  '#size'          => 30, 
-  '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_name_sing_short', FALSE),
+    '#size'          => 30,
+    '#maxlength'     => 64,
+    '#default_value' => variable_get('seamoon_otp_name_sing_short', _SEAMOON_OTP_NAME_SING_SHORT),
   );
 
   $form['seamoon_otp']['seamoon_otp_brand']['seamoon_otp_name_plur_short'] = array(
     '#title'         => t('Brand\'s name of Seamoon OTP Key (short plural)'),
     '#description'   => t('Personalize the name of Seamoon OTP Key term.'),
     '#type'          => 'textfield',
-  '#size'          => 30, 
-  '#maxlength'     => 64, 
-    '#default_value' => variable_get('seamoon_otp_name_plur_short', FALSE),
+    '#size'          => 30,
+    '#maxlength'     => 64,
+    '#default_value' => variable_get('seamoon_otp_name_plur_short', _SEAMOON_OTP_NAME_PLUR_SHORT),
   );
   
   $form['seamoon_otp']['seamoon_otp_texts'] = array(
@@ -124,7 +123,7 @@ function seamoon_otp_admin_config(&$form_state) {
     //'#description'   => t(''),
     '#type'          => 'textarea',
     '#rows'          => 2,
-    '#default_value' => variable_get('seamoon_otp_intro', FALSE),
+    '#default_value' => variable_get('seamoon_otp_intro', _SEAMOON_OTP_INTRO),
   );
 
   $form['seamoon_otp']['seamoon_otp_texts']['seamoon_otp_des_pair'] = array(
@@ -132,32 +131,31 @@ function seamoon_otp_admin_config(&$form_state) {
     //'#description'   => t(''),
     '#type'          => 'textarea',
     '#rows'          => 2,
-    '#default_value' => variable_get('seamoon_otp_des_pair', FALSE),
+    '#default_value' => variable_get('seamoon_otp_des_pair', _SEAMOON_OTP_DESCRIPTION),
   );
 
   $form['seamoon_otp']['seamoon_otp_texts']['seamoon_otp_confirm_pair'] = array(
     '#title'         => t('Confirmation of pair phase'),
     '#type'          => 'textarea',
     '#rows'          => 2,
-    '#default_value' => variable_get('seamoon_otp_confirm_pair', FALSE),
+    '#default_value' => variable_get('seamoon_otp_confirm_pair', _SEAMOON_OTP_CONFIRM_PAIR),
   );
 
   $form['seamoon_otp']['seamoon_otp_texts']['seamoon_otp_login_intro'] = array(
     '#title'         => t('Introductions on otp key login page'),
     '#type'          => 'textarea',
     '#rows'          => 2,
-    '#default_value' => variable_get('seamoon_otp_login_intro', FALSE),
+    '#default_value' => variable_get('seamoon_otp_login_intro', _SEAMOON_OTP_LOGIN_INTRO),
   );
 
   $form['seamoon_otp']['seamoon_otp_texts']['seamoon_otp_login_des'] = array(
     '#title'         => t('Description fieldset on otp key login page'),
     '#type'          => 'textarea',
     '#rows'          => 2,
-    '#default_value' => variable_get('seamoon_otp_login_des', FALSE),
+    '#default_value' => variable_get('seamoon_otp_login_des', _SEAMOON_OTP_LOGIN_DESCRIPTION),
   );
   
   return system_settings_form($form);
-
 }
 
 
@@ -175,9 +173,7 @@ function seamoon_otp_admin_config_validate($form, &$form_state) {
  * Seamoon config form submit
  */
 function seamoon_otp_admin_config_submit($form, &$form_state) {
-
-  return system_settings_form_submit($form, $form_state);
-  
+  return system_settings_form_submit($form, $form_state); 
 }
 
 
@@ -230,21 +226,22 @@ function seamoon_otp_list_keys() {
     $rows[] = array($quote['uid'], $name, $quote['serial_number'], $time, $auth_type, $delete);
 
   }
+
+  // Prepare output
+  $output = '';
   
   if (count($rows)) {
 
-  $html.= theme('table', $header, $rows, $attributes);
-
-  $html.= theme('pager', NULL, $how_many_per_page);
+    $output.= theme('table', $header, $rows, $attributes);
+    $output.= theme('pager', NULL, $how_many_per_page);
 
   } else {
 
-  $html.= t('No keys found');
+    $output.= t('No keys found');
   
   }
 
-  return $html;
-
+  return $output;
 }
 
 

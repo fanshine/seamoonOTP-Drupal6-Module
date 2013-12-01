@@ -25,7 +25,7 @@ define(_SEAMOON_OTP_INTRO, '');
 define(_SEAMOON_OTP_DESCRIPTION, '');
 
 // Default paired confirmation message
-define(_SEAMOON_OTP_CONFIRM_PAIR, 'Your Qkey pairing phase is completed correctly.');
+define(_SEAMOON_OTP_CONFIRM_PAIR, 'Your Seamoon\'s key pairing phase is completed correctly.');
 
 // Default seamoon_otp_intro
 define(_SEAMOON_OTP_LOGIN_INTRO, '');
@@ -33,8 +33,11 @@ define(_SEAMOON_OTP_LOGIN_INTRO, '');
 // Default seamoon_otp_intro
 define(_SEAMOON_OTP_LOGIN_DESCRIPTION, '');
 
-// Default url to redirect users after login
-define(_SEAMOON_OTP_URL_FORMLOGIN, 'user/login');
+// Default url to redirect users after correct pair
+define(_SEAMOON_OTP_PAIRED_REDIR, '' );
+
+// Default url to redirect users after correct login
+define(_SEAMOON_OTP_LOGIN_REDIR, 'user/login' );
 
 /**
  * Implements hook_init().
@@ -65,7 +68,6 @@ function seamoon_otp_init() {
     $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
     $domainUrl = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
 
-
     // check onload page if the users are keylogged
     if ( $active && $user_paired->uid && $user_key_logged != 'Y' && $user_chkrole && $excluded == 0 ) {
                 
@@ -85,15 +87,13 @@ function seamoon_otp_init() {
         drupal_goto($redirectTo);
 
     }
-    
-    
+
     // Reset nocache_otp cookie
     if ( $_COOKIE['nocache_otp'] == '1' && $user_key_logged == 'Y' ) {
 
         setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
 
     }
-
 }
 
 /**
@@ -285,7 +285,7 @@ function seamoon_otp_theme() {
  */
 function seamoon_otp_form_alter(&$form, &$form_state, $form_id) {
 
-  //global $language;
+  global $language;
 
   $lang = $language->language;
 
