@@ -1,6 +1,12 @@
 <?php
-// $Id: seamoon_otp.install
+/**
+ * @file seamoon_otp.install
+ * Contains install and update functions for Seamoon OTP.
+ */
 
+/**
+ * Implementation of hook_schema().
+ */
 function seamoon_otp_schema() {
   
   // Token SN seamoon_otp_sn information table
@@ -66,12 +72,18 @@ function seamoon_otp_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function seamoon_otp_install() {
   // Create my tables.
   drupal_install_schema('seamoon_otp');
   drupal_set_message(t('Database tables for "Seamoon KeyGenerator OTP" module have been installed.'));
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function seamoon_otp_uninstall() {
   // Drop my tables.
   // Take care of uninstall phase, because we can erase all associations between users and our serials key

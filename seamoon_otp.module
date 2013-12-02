@@ -1,109 +1,102 @@
 <?php
-// $Id: seamoon_otp_key.module
-
 /**
 * @file
 * Custom functions for Seamoon OTP Key.
 */
 
-// Default Brand's name of Seamoon OTP Key (singular): 
-define(_SEAMOON_OTP_NAME, 'Seamoon OTP Key');
+// Default Brand"s name of Seamoon OTP Key (singular): 
+define("SEAMOON_OTP_URLS_EXCLUDED", "otp_key|otp_key_login|otp_key_paired|logout");
 
-// Default Brand's name of Seamoon OTP Key (plural): 
-define(_SEAMOON_OTP_NAME_PLUR, 'Seamoon OTP Keys');
+// Default Brand"s name of Seamoon OTP Key (singular): 
+define("SEAMOON_OTP_NAME", "Seamoon OTP Key");
 
-// Default Brand's name of Seamoon OTP Key (short singular): 
-define(_SEAMOON_OTP_NAME_SING_SHORT, 'OTP Key');
+// Default Brand"s name of Seamoon OTP Key (plural): 
+define("SEAMOON_OTP_NAME_PLUR", "Seamoon OTP Keys");
 
-// Default Brand's name of Seamoon OTP Key (short plural): 
-define(_SEAMOON_OTP_NAME_PLUR_SHORT, 'OTP Keys');
+// Default Brand"s name of Seamoon OTP Key (short singular): 
+define("SEAMOON_OTP_NAME_SING_SHORT", "OTP Key");
+
+// Default Brand"s name of Seamoon OTP Key (short plural): 
+define("SEAMOON_OTP_NAME_PLUR_SHORT", "OTP Keys");
 
 // Default seamoon_otp_intro
-define(_SEAMOON_OTP_INTRO, '');
+define("SEAMOON_OTP_INTRO", "");
 
 // Default seamoon_otp_des_pair
-define(_SEAMOON_OTP_DESCRIPTION, '');
+define("SEAMOON_OTP_DESCRIPTION", "");
 
 // Default paired confirmation message
-define(_SEAMOON_OTP_CONFIRM_PAIR, 'Your Seamoon\'s key pairing phase is completed correctly.');
+define("SEAMOON_OTP_CONFIRM_PAIR", "Your Seamoon\"s key pairing phase is completed correctly.");
 
 // Default seamoon_otp_intro
-define(_SEAMOON_OTP_LOGIN_INTRO, '');
+define("SEAMOON_OTP_LOGIN_INTRO", "");
 
 // Default seamoon_otp_intro
-define(_SEAMOON_OTP_LOGIN_DESCRIPTION, '');
+define("SEAMOON_OTP_LOGIN_DESCRIPTION", "");
 
 // Default url to redirect users after correct pair
-define(_SEAMOON_OTP_PAIRED_REDIR, '' );
+define("SEAMOON_OTP_PAIRED_REDIR", "");
 
 // Default url to redirect users after correct login
-define(_SEAMOON_OTP_LOGIN_REDIR, 'user/login' );
+define("SEAMOON_OTP_LOGIN_REDIR", "user/login");
 
 /**
  * Implements hook_init()
  */
 function seamoon_otp_init() {
-    
-    global $_COOKIE, $user, $language;
+  // Define global variables
+  global $_COOKIE, $user, $language, $seamoon_otp_conf;
 
-    $lang = $language->language;
-    
-    if (!empty($_POST["form_id"]) && ($_POST["form_id"] == 'seamoon_otp_key_pair_form' || $_POST["form_id"] == 'seamoon_otp_key_login_form') ) {
+  $seamoon_otp_conf = array(
+    'active'  => variable_get('seamoon_otp_active', FALSE),
+    'pairing' => variable_get('seamoon_otp_pairing', FALSE),
+    'user_paired' => seamoon_otp_check_user_pair_exist($user->uid),
+    'user_chkrole' => seamoon_otp_chkrole($user->uid)
+  );
 
-        require dirname(__FILE__) . '/phpsdk/seamoonapi.php';
+  // Define variables for checking
+  $excluded = ( seamoon_otp_url_excluded() !== FALSE ) ? 1 : 0;
 
-    }
-    
-    $active = variable_get('seamoon_otp_active', FALSE);
-    $switch_off = variable_get('seamoon_otp_switch_off', FALSE);
-    $user_paired = _seamoon_otp_check_user_pair_exist($user->uid);
-    $user_chkrole = _seamoon_otp_chkrole($user->uid);
-    $user_key_logged = $_COOKIE['seamoon_otp_key_logged'];
-    $urlToExclude = array('otp_key', 'otp_key_login', 'otp_key_paired', 'logout');
-    $alias = drupal_get_path_alias($_GET["q"]);
-    $excluded = ( _seamoon_otp_strpos_arr($alias, $urlToExclude) !== FALSE ) ? 1 : 0;
+  // Extract URL elements from parse_url
+  $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
+  $domainUrl   = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
+  $domainProto = ( $domainparts["scheme"] == 'https') ? 'https://' : 'http://';
+  $domainLang  = !empty($language->prefix) ? $language->prefix.'/' : '/';
 
-    // extract the real domain url from referer
-    //$domainparts = parse_url( !empty($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : $_SERVER["HTTP_HOST"] ); 
-    $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
-    $domainUrl = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
+  $url = seamoon_otp_baseUrl();
 
-    // check onload page if the users are keylogged
-    if ( $active && $user_paired->uid && $user_key_logged != 'Y' && $user_chkrole && $excluded == 0 ) {
-                
-        $redirectTo = $lang . '/otp_key_login';
-        $redirectTo = 'http://' . $domainUrl . '/' . $redirectTo;
+  // function
 
-        drupal_goto($redirectTo);
+  // check onload page if the users are keylogged
+  if ( $seamoon_otp_conf['active'] && !empty($seamoon_otp_conf['user_paired']) && $_COOKIE['seamoon_otp_key_logged'] != 'Y' && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 ) {
+    // Prepare the URL
+    $redirectTo = $domainProto . $domainUrl . '/' . $domainLang . 'otp_key_login';
+    // Redirect
+    drupal_goto($redirectTo);
+  }
 
-    }
+  // If the user is not paired and the pairing phase is mandatory, take the action below
+  if ( $seamoon_otp_conf['active'] && empty($seamoon_otp_conf['user_paired']) && $pairing == 'mandatory' && $user->uid > 1 && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 ) {
+    // Prepare the URL
+    $redirectTo = $domainProto . $domainUrl . '/' . $domainLang . 'otp_key';
+    // Redirect
+    drupal_goto($redirectTo);
+  }
 
-    // If the user is not paired and the pairing phase is mandatory, take the action below
-    if ( $active && $switch_off == 'mandatory' && empty($user_paired->uid) && $user->uid > 1 && $user_chkrole && $excluded == 0 ) {
-
-        $redirectTo = $lang . '/otp_key';
-        $redirectTo = 'http://' . $domainUrl . '/' . $redirectTo;
-
-        drupal_goto($redirectTo);
-
-    }
-
-    // Reset nocache_otp cookie
-    if ( $_COOKIE['nocache_otp'] == '1' && $user_key_logged == 'Y' ) {
-
-        setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
-
-    }
+  // Reset nocache_otp cookie
+  if ( $_COOKIE['nocache_otp'] == '1' && $_COOKIE['seamoon_otp_key_logged'] == 'Y' ) {
+    setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
+  }
 }
 
-/**
- * Implements hook_menu().
+/*
+ * Implementation of hook_menu()
  */
 function seamoon_otp_menu() {
 
     $items = array();
     
-    $brand_name_plur_short = variable_get('seamoon_otp_name_plur_short', _SEAMOON_OTP_NAME_PLUR_SHORT);
+    $brand_name_plur_short = variable_get('seamoon_otp_name_plur_short', SEAMOON_OTP_NAME_PLUR_SHORT);
   
     $items['admin/user/seamoon_otp'] = array(
         'title' => t("Seamoon OTP"),
@@ -149,7 +142,7 @@ function seamoon_otp_menu() {
         'title' => t('%s - Pair your digital key', array('%s' => $brand_name_plur_short)),
         'page callback' => 'drupal_get_form',
         'page arguments' => array('seamoon_otp_key_pair_form'),
-        'access callback' => '_seamoon_otp_chkrole',
+        'access callback' => 'seamoon_otp_chkrole',
         'access arguments' => array(1),
         'file' => 'seamoon_otp.pages.inc',
         'type' => MENU_CALLBACK,
@@ -159,7 +152,7 @@ function seamoon_otp_menu() {
         'title' => t('%s - Paired', array('%s' => $brand_name_plur_short)),
         'page callback' => 'seamoon_otp_key_paired',
         'page arguments' => array(1),
-        'access callback' => '_seamoon_otp_chkrole',
+        'access callback' => 'seamoon_otp_chkrole',
         'access arguments' => array(1),
         'file' => 'seamoon_otp.pages.inc',
         'type' => MENU_CALLBACK,
@@ -169,7 +162,7 @@ function seamoon_otp_menu() {
         'title' => t('%s - Login', array('%s' => $brand_name_plur_short)),
         'page callback' => 'drupal_get_form',
         'page arguments' => array('seamoon_otp_key_login_form'),
-        'access callback' => '_seamoon_otp_chkrole',
+        'access callback' => 'seamoon_otp_chkrole',
         'access arguments' => array(1),
         'file' => 'seamoon_otp.pages.inc',
         'type' => MENU_CALLBACK,
@@ -179,16 +172,14 @@ function seamoon_otp_menu() {
 
 }
 
-
 /**
  * Implements hook_user().
  */
 function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
-
-  global $language;
+  // Define global variables
+  global $language, $seamoon_otp_conf;
   
-  $lang = $language->language;
-
+  // Make switch for $op = operation
   switch ($op) {
     case 'load':
       break;
@@ -202,36 +193,26 @@ function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
       // START check
                   
       $active = variable_get('seamoon_otp_active', FALSE);
-      $switch_off = variable_get('seamoon_otp_switch_off', FALSE);
-      $user_paired = _seamoon_otp_check_user_pair_exist($account->uid);
-      $user_key_logged = $_COOKIE['seamoon_otp_key_logged'];
-      $user_chkrole = _seamoon_otp_chkrole($user->uid);
+      $pairing = variable_get('seamoon_otp_pairing', FALSE);
+      $user_chkrole = seamoon_otp_chkrole($user->uid);
       
-      //var_dump($user_paired); exit;
+      //var_dump( $seamoon_otp_conf['user_paired'] ); exit;
 
       // extract the real domain url from referer
       //$domainparts = parse_url( !empty($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : $_SERVER["HTTP_HOST"] ); 
       $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
       $domainUrl = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
-        
+
       // If the mandatory pairing is mandatory procede to set a nocache_otp cookie
-      if ( ( $switch_off == 'mandatory' && $active && $user_chkrole ) || ( $active && $user_chkrole && !$user_key_logged && !empty($user_paired->uid) ) ) {
-
+      if ( ( $pairing == 'mandatory' && $active && $user_chkrole ) || ( $active && $user_chkrole && !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) ) {
           setcookie('nocache_otp', '1', time() + ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
-
       }
       
       // If the OTP Seamoon is active and user is already paired, take the action below
-      if ( $active && $user_chkrole && !empty($user_paired->uid) && empty($user_key_logged) ) {
+      if ( $active && $user_chkrole && !empty($seamoon_otp_conf['user_paired']) && empty($_COOKIE['seamoon_otp_key_logged']) ) {
 
-        $urlA = $lang . '/otp_key_login';
+        $urlA = $language->language . '/otp_key_login';
         $urlA = 'http://' . $domainUrl . '/' . $urlA;
-
-        if ( $_COOKIE['drupal_uid'] == 90662 ) {
-
-            //var_dump($urlA); exit;
-
-        }
 
         // go to association page
         drupal_goto($urlA); 
@@ -239,10 +220,10 @@ function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
       }
 
       // If the user is not paired and the pairing phase is mandatory, take the action below
-      if ( $active && $user_chkrole && $switch_off == 'mandatory' && empty($user_paired->uid) && $account->uid != 1 ) {
+      if ( $active && $user_chkrole && $pairing == 'mandatory' && empty($seamoon_otp_conf['user_paired']) && $account->uid != 1 ) {
 
-        //$urlB = base_path() . $lang . '/otp_key';
-        $urlB = $lang . '/otp_key';
+        //$urlB = base_path() . $seamoon_otp_conf['user_paired'] . '/otp_key';
+        $urlB = $seamoon_otp_conf['user_paired'] . '/otp_key';
         $urlB = 'http://' . $domainUrl . '/' . $urlB;
 
         // go to association page
@@ -262,7 +243,6 @@ function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
 
 }
 
-
 /**
  * Implements hook_theme().
  */
@@ -279,19 +259,16 @@ function seamoon_otp_theme() {
   );
 }
 
-
 /**
  * Implements hook_form_alter().
  */
 function seamoon_otp_form_alter(&$form, &$form_state, $form_id) {
-
+  // Define global variables
   global $language;
-
-  $lang = $language->language;
 
   if ( $form_id == 'seamoon_otp_key_pair_form' ) {
 
-    $alias_redirect  = drupal_get_path_alias('otp_key_paired', $lang);
+    $alias_redirect  = drupal_get_path_alias('otp_key_paired', $language->language);
 
     $form['#redirect'] = array($alias_redirect);
 
@@ -300,14 +277,14 @@ function seamoon_otp_form_alter(&$form, &$form_state, $form_id) {
   return $form;
 }
 
-
 /**
  * Check if an user is part of role enabled
  */
-function _seamoon_otp_chkrole() {
-    
+function seamoon_otp_chkrole() {
+  // Define global variables
   global $user;
   
+  // Get roles
   $roles = $user->roles;
  
   // unset roles 0, 1 and 2 (anonymous, authenticated and group zero)
@@ -315,81 +292,80 @@ function _seamoon_otp_chkrole() {
       if ( $k==0 || $k==1 || $k==2 ) unset($roles[$k]);
   }
   
-  $rolesActive = _seamoon_otp_get_roles('key');
+  $rolesActive = seamoon_otp_getUserRoles('key');
   
   if ( array_intersect_key( $roles, $rolesActive ) ) {
     $authorized = TRUE;
+  } else if ( $user->uid == 1 ) {
+    // Return always true if user is the admin
+    $authorized = TRUE;
   } else {
     $authorized = FALSE;
-  }
-  
-  // return always true if user is the admin
-  if ( $user->uid == 1 ) {
-    $authorized = TRUE;
-  }
+  }  
     
   return $authorized;
 }
 
-
 /**
  * Check if serial number really exist
  */
-function _seamoon_otp_check_sn_exist($sn) {
+function seamoon_otp_check_sn_exist($sn) {
+  // Make the query
+  $query = db_query("SELECT {seamoon_otp_sn}.serial_number, {seamoon_otp_sn}.serial_number_key FROM {seamoon_otp_sn} WHERE {seamoon_otp_sn}.serial_number = '%s'", array('%s' => $sn) );
 
-  $queryIfSnExist = db_query("SELECT {seamoon_otp_sn}.serial_number, {seamoon_otp_sn}.serial_number_key FROM {seamoon_otp_sn} WHERE {seamoon_otp_sn}.serial_number = '%s'", array('%s' => $sn) );
-  $check = db_fetch_object($queryIfSnExist);
+  // Fetch the data
+  $check = db_fetch_object($query);
 
   return $check;
-
 }
-
 
 /**
  * Check if serial number pair already exist
  */
-function _seamoon_otp_check_sn_pair_exist($sn) {
+function seamoon_otp_check_sn_pair_exist($sn) {
+  // Make the query
+  $query = db_query("SELECT {seamoon_otp_users}.serial_number FROM {seamoon_otp_users} WHERE {seamoon_otp_users}.serial_number = '%s'", array('%s' => $sn) );
 
-  $queryIfSnAssociated = db_query("SELECT {seamoon_otp_users}.serial_number FROM {seamoon_otp_users} WHERE {seamoon_otp_users}.serial_number = '%s'", array('%s' => $sn) );
-  $check = db_fetch_object($queryIfSnAssociated);
+  // Fetch the data
+  $check = db_fetch_object($query);
 
   return $check;
-
 }
-
 
 /**
  * Check if user is already paired with a serial number
  */
-function _seamoon_otp_check_user_pair_exist($id) {
+function seamoon_otp_check_user_pair_exist($uid) {
+  // Make the query
+  $query = db_query("SELECT * FROM {seamoon_otp_users} WHERE uid = '%s'", array('%s' => $uid) );
 
-  $queryIfSnAssociated = db_query("SELECT * FROM {seamoon_otp_users} WHERE uid = '%s'", array('%s' => $id) );
-  $check = db_fetch_object($queryIfSnAssociated);
+  // Fetch the data
+  $check = db_fetch_object($query);
 
-  return $check;
-
+  return !empty($check->uid) ? $check->uid : false;
 }
 
 /**
  * Retrieve serial number info fro muser
  */
-function _seamoon_otp_get_user_sn_info($id) {
+function seamoon_otp_get_user_sn_info($id) {
+  // Make the query
+  $query = db_query("SELECT * FROM {seamoon_otp_sn},{seamoon_otp_users} WHERE {seamoon_otp_sn}.serial_number = {seamoon_otp_users}.serial_number AND {seamoon_otp_users}.uid = '%s'", array('%s' => $id) );
 
-  $querySnkey = db_query("SELECT * FROM {seamoon_otp_sn},{seamoon_otp_users} WHERE {seamoon_otp_sn}.serial_number = {seamoon_otp_users}.serial_number AND {seamoon_otp_users}.uid = '%s'", array('%s' => $id) );
-  $check = db_fetch_object($querySnkey);  
+  // Fetch the data
+  $check = db_fetch_object($query);  
 
   return $check;
-
 }
 
-
 /**
- * Helper function, get  seamoon user roles
+ * Helper function, get seamoon user roles
+ *
  * @param $all_roles = return all user roles
  * @return array of user roles
  */
-function _seamoon_otp_get_roles($what) {
-  
+function seamoon_otp_getUserRoles($what) {
+  // Retrieve all roles
   $roles = user_roles();
   
   // unset roles 1 (anonymous)
@@ -416,39 +392,41 @@ function _seamoon_otp_get_roles($what) {
       $seamoon_otp_roles[$key] = $roles[$key];
     }
     return $seamoon_otp_roles;
-  }
-  
+  }  
 }
-
 
 /**
  * Helper function, use strpos with array
- * @return $pos value if exist
+ *
+ * @return position if value exist
  */
-function _seamoon_otp_strpos_arr($haystack, $needle) {
+function seamoon_otp_url_excluded() {
+  // Take the constant with urls to exclude
+  $urlsToExclude = explode('|', SEAMOON_OTP_URLS_EXCLUDED);
 
-  if(!is_array($needle)) $needle = array($needle);
+  $alias = drupal_get_path_alias($_GET["q"]);
+
+  // Force $urlsToExclude to be an array
+  if(!is_array($urlsToExclude)) $urlsToExclude = array($urlsToExclude);
   
-  foreach($needle as $what) {
-    if(($pos = strpos($haystack, $what))!==false) return $pos;
+  // MAke the check and return the pos
+  foreach($urlsToExclude as $element) {
+    if(($pos = strpos($alias, $element))!==false) return $pos;
   }
   
+  // Return FALSE if no match
   return FALSE;
-
 }
-
-
-
 
 /**
  * Add class otp-mandatory in the body
- *
  */
 function seamoon_otp_preprocess_page(&$variables) {
+    // Get setting for pairing
+    $pairing = variable_get('seamoon_otp_pairing', FALSE);
     
-    $switch_off = variable_get('seamoon_otp_switch_off', FALSE);
-    
-    if ( $switch_off == 'mandatory' ) {
+    // Add class in the body
+    if ( $pairing == 'mandatory' ) {
         // string to array
         $classes = explode(' ', $variables['body_classes']);
         // add your class to the array
@@ -458,7 +436,6 @@ function seamoon_otp_preprocess_page(&$variables) {
         // from array to string into body_classes
         $variables['body_classes'] = implode(' ', $classes); // Concatenate with spaces.
     }
-
 }
 
 /**
