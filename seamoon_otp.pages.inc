@@ -11,8 +11,6 @@ function seamoon_otp_key_pair_form($form_value) {
     
   global $user, $seamoon_otp_conf;
 
-  dpm( $seamoon_otp_conf );
-
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
   drupal_add_js(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.js');
 
@@ -80,8 +78,11 @@ function seamoon_otp_key_pair_form($form_value) {
  * Seamoon Key page form validate
  */
 function seamoon_otp_key_pair_form_validate($form, &$form_state) {
-    
+  // Define global variables
   global $_GET, $user, $_SERVER, $language;
+
+  // Set errors variable
+  $errors = '';
   
   // Serial Number from user form
   $sn_fid = $form['seamoon_otp_key_pair']['serial_number'];
@@ -115,7 +116,7 @@ function seamoon_otp_key_pair_form_validate($form, &$form_state) {
   // CHECK if serial key exist in database of serial keys
   $sn_exist = seamoon_otp_check_sn_exist($sn_val);
 
-  if ( !empty($sn_val) && $sn_exist->serial_number != $sn_val ) {
+  if ( !empty($sn_val) && isset($sn_exist->serial_number) && $sn_exist->serial_number != $sn_val ) {
     form_error($sn_fid, t('The %field inserted is not correct.', array('%field' => $sn_nam)) );
     $errors+=1;
   }
@@ -123,38 +124,36 @@ function seamoon_otp_key_pair_form_validate($form, &$form_state) {
   // CHECK if serial key is already associated in database with an user
   $sn_associated = seamoon_otp_check_sn_pair_exist($sn_val);
 
-  if ( !empty($sn_val) && $sn_associated->serial_number == $sn_val ) {
+  if ( !empty($sn_val) && isset($sn_associated->serial_number) && $sn_associated->serial_number == $sn_val ) {
     form_error($sn_fid, t('The %field inserted it\'s already associated with an account.', array('%field' => $sn_nam)) );
     $errors+=1;
   } 
 
   // CHECK if the new association serial_key|sn_info is valid using the seamoon API
-  if (!$errors) {
+  if (empty($errors)) {
 
     // Require the Seamoon PHP SDK only in certain case
     require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
 
     $key = new seamoonapi();
-    
+
     // Serial Key Info from query sql
-    $sn_key = $sn_exist->serial_number_key;
-    
+    $sn_key = isset($sn_exist->serial_number_key) ? $sn_exist->serial_number_key : '';
+
     // Serial Number Key validation
     $result = $key->passwordsyn($sn_key, $otp_val);
-    
+
+    dpm($result);
+
+    // 
     if( strlen($result) < 3 ) {
-    
         form_error($otp_key, t('The %field inserted is not correct.', array('%field' => $otp_nam)) );
-    
     } else {
-        
         // Make a variable for submit process
         $form_state['values']['#sn_key'] = $sn_key;
-
     }
 
   }
-  /* END CHECKing */
   
   return $form;
 }
@@ -344,7 +343,7 @@ function seamoon_otp_key_login_form_validate($form, &$form_state) {
   }
   
   /* CHECK if the new association serial_key|sn_info is valid using the seamoon API */  
-  if (!$errors) {
+  if (empty($errors)) {
 
     // Require the Seamoon PHP SDK only in certain case
     require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
