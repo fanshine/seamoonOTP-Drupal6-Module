@@ -40,7 +40,7 @@ define(_SEAMOON_OTP_PAIRED_REDIR, '' );
 define(_SEAMOON_OTP_LOGIN_REDIR, 'user/login' );
 
 /**
- * Implements hook_init().
+ * Implements hook_init()
  */
 function seamoon_otp_init() {
     

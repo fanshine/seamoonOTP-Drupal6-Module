@@ -20,8 +20,6 @@ function seamoon_otp_key_pair_form($form_value) {
   $seamoon_otp_intro = variable_get('seamoon_otp_intro', _SEAMOON_OTP_INTRO);
   $seamoon_otp_des_pair = variable_get('seamoon_otp_des_pair', _SEAMOON_OTP_DESCRIPTION);
   $switch_off = variable_get('seamoon_otp_switch_off', FALSE);
-  
-  $delta = $form_value['delta'];
 
   $form['seamoon_otp_key_pair'] = array(
     '#type'          => 'fieldset',
@@ -312,8 +310,6 @@ function seamoon_otp_key_login_form($form_value) {
 
   $seamoon_otp_intro = variable_get('seamoon_otp_intro', _SEAMOON_OTP_INTRO);
   $seamoon_otp_des_pair = variable_get('seamoon_otp_des_pair', _SEAMOON_OTP_DESCRIPTION);
-  
-  $delta = $form_value['delta'];
 
   $form['#suffix'] = '<div id="seamoon-otp-key-overlay"></div>';
   
