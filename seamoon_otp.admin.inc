@@ -63,7 +63,7 @@ function seamoon_otp_admin_config(&$form_state) {
       '#title'         => t('Support for roles'),
       '#description'   => t('Select the roles that need to use the Seamoon OTP Key security.'),
       '#type'          => 'checkboxes',
-      '#options' => seamoon_otp_get_roles('all'),
+      '#options' => seamoon_otp_getUserRoles('all'),
       '#default_value' => variable_get('seamoon_otp_roles', array()),
     );
   

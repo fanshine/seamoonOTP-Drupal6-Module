@@ -4,7 +4,6 @@
  * User pages.
  */
 
-
 /**
  * Seamoon Keys page form
  */
@@ -12,25 +11,21 @@ function seamoon_otp_key_pair_form($form_value) {
     
   global $user, $seamoon_otp_conf;
 
-  // Require the Seamoon PHP SDK only in certain case
-  require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
-
   dpm( $seamoon_otp_conf );
 
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
   drupal_add_js(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.js');
 
   drupal_set_title(t('!name - Pair your digital key', array('!name' => variable_get('seamoon_otp_name_sing_short', SEAMOON_OTP_NAME_SING_SHORT) ) ) );
-  
-  $seamoon_otp_intro = variable_get('seamoon_otp_intro', SEAMOON_OTP_INTRO);
-  $seamoon_otp_des_pair = variable_get('seamoon_otp_des_pair', SEAMOON_OTP_DESCRIPTION);
+
+  // Get pairing modality
   $pairing = variable_get('seamoon_otp_pairing', FALSE);
 
   $form['seamoon_otp_key_pair'] = array(
     '#type'          => 'fieldset',
     '#title'         => variable_get('seamoon_otp_name_sing_short', SEAMOON_OTP_NAME_SING_SHORT),
-    '#prefix'        => ($seamoon_otp_intro != '') ? "<p>" . t( $seamoon_otp_intro ) . "</p>" : '', 
-    '#description'   => ($seamoon_otp_des_pair != '') ? "<p>" . t( $seamoon_otp_des_pair ) . "</p>" : '', 
+    '#prefix'        => '<p>' . t( variable_get('seamoon_otp_intro', SEAMOON_OTP_INTRO) ) . '</p>',
+    '#description'   => '<p>' . t( variable_get('seamoon_otp_des_pair', SEAMOON_OTP_DESCRIPTION) ) . '</p>',
     '#collapsible'   => FALSE,
   );
   
@@ -101,57 +96,43 @@ function seamoon_otp_key_pair_form_validate($form, &$form_state) {
   if ( !empty($sn_val) ) {
 
     if ( !is_numeric($sn_val) ) {
-        
         form_error($sn_fid, t('You must enter only numbers in %s field.', array('%s' => $sn_nam)) );
         $errors+=1;
-        
     }
 
     if ( strlen($sn_val) < 9 ) {
-        
         form_error($sn_fid, t('You must enter a %s field correctly.', array('%s' => $sn_nam)) );
         $errors+=1;
-        
     }
-
   }
   
   // Validate otp fields
   if ( !empty($otp_val) && ( strlen($otp_val) < 3 || !is_numeric($otp_val) ) ) {
-
     form_error($otp_key, t('You must enter a %s field correctly.', array('%s' => $otp_nam)) );
     $errors+=1;
-
   }
   
-  // Validate sn field in database
-  
-  /* CHECK if serial key exist in database of serial keys */ 
+  // CHECK if serial key exist in database of serial keys
   $sn_exist = seamoon_otp_check_sn_exist($sn_val);
 
   if ( !empty($sn_val) && $sn_exist->serial_number != $sn_val ) {
-      
     form_error($sn_fid, t('The %field inserted is not correct.', array('%field' => $sn_nam)) );
     $errors+=1;
-    
   }
-  
-  /* END CHECKing */
-  
-  /* CHECK if serial key is already associated in database with an user */  
+    
+  // CHECK if serial key is already associated in database with an user
   $sn_associated = seamoon_otp_check_sn_pair_exist($sn_val);
-  
+
   if ( !empty($sn_val) && $sn_associated->serial_number == $sn_val ) {
-      
     form_error($sn_fid, t('The %field inserted it\'s already associated with an account.', array('%field' => $sn_nam)) );
     $errors+=1;
-    
   } 
-  
-  /* END CHECKing */
-  
-  /* CHECK if the new association serial_key|sn_info is valid using the seamoon API */  
+
+  // CHECK if the new association serial_key|sn_info is valid using the seamoon API
   if (!$errors) {
+
+    // Require the Seamoon PHP SDK only in certain case
+    require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
 
     $key = new seamoonapi();
     
@@ -306,29 +287,18 @@ function seamoon_otp_key_login_form($form_value) {
     
   global $user;
 
-  // Require the Seamoon PHP SDK only in certain case
-  require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
-
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
   drupal_add_js(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.js');
 
   drupal_set_title(t('!name - Login with your digital key', array('!name' => variable_get('seamoon_otp_name_sing_short', SEAMOON_OTP_NAME_SING_SHORT))));
 
-  $seamoon_otp_intro = variable_get('seamoon_otp_intro', SEAMOON_OTP_INTRO);
-  $seamoon_otp_des_pair = variable_get('seamoon_otp_des_pair', SEAMOON_OTP_DESCRIPTION);
-
   $form['#suffix'] = '<div id="seamoon-otp-key-overlay"></div>';
-  
-  
-  $seamoon_otp_login_intro = variable_get('seamoon_otp_login_intro', SEAMOON_OTP_LOGIN_INTRO);
-  $seamoon_otp_login_des = variable_get('seamoon_otp_login_des', SEAMOON_OTP_LOGIN_DESCRIPTION);
 
-  
   $form['seamoon_otp_login_key'] = array(
     '#type'          => 'fieldset',
-    '#title'         => variable_get('seamoon_otp_name_sing_short', SEAMOON_OTP_NAME_SING_SHORT) . ' ' . t('login'),
-    '#prefix'        => !empty($seamoon_otp_login_intro) ? "<p>" . t( $seamoon_otp_login_intro ) . "</p>" : '',
-    '#description'   => !empty($seamoon_otp_login_des) ? "<p>" . t( $seamoon_otp_login_des ) . "</p>" : '',
+    '#title'         => variable_get('seamoon_otp_name_sing_short', SEAMOON_OTP_NAME_SING_SHORT),
+    '#prefix'        => '<p>' . t( variable_get('seamoon_otp_login_intro', SEAMOON_OTP_LOGIN_INTRO) ) . '</p>',
+    '#description'   => '<p>' . t( variable_get('seamoon_otp_login_des', SEAMOON_OTP_LOGIN_DESCRIPTION) ) . '</p>',
     '#collapsible'   => FALSE,
   );
   
@@ -375,6 +345,9 @@ function seamoon_otp_key_login_form_validate($form, &$form_state) {
   
   /* CHECK if the new association serial_key|sn_info is valid using the seamoon API */  
   if (!$errors) {
+
+    // Require the Seamoon PHP SDK only in certain case
+    require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
 
     $key = new seamoonapi();
     

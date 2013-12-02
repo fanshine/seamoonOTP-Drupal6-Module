@@ -45,7 +45,7 @@ define("SEAMOON_OTP_LOGIN_REDIR", "user/login");
  */
 function seamoon_otp_init() {
   // Define global variables
-  global $_COOKIE, $user, $language, $seamoon_otp_conf;
+  global $user, $language, $seamoon_otp_conf;
 
   $seamoon_otp_conf = array(
     'active'  => variable_get('seamoon_otp_active', FALSE),
@@ -57,34 +57,22 @@ function seamoon_otp_init() {
   // Define variables for checking
   $excluded = ( seamoon_otp_url_excluded() !== FALSE ) ? 1 : 0;
 
-  // Extract URL elements from parse_url
-  $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
-  $domainUrl   = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
-  $domainProto = ( $domainparts["scheme"] == 'https') ? 'https://' : 'http://';
-  $domainLang  = !empty($language->prefix) ? $language->prefix.'/' : '/';
+  // Check in onload page
+  if ( $seamoon_otp_conf['active'] && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 && $user->uid > 1 ) {
 
-  $url = seamoon_otp_baseUrl();
+    // Redirect, if the users are keylogged
+    if ( !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) {
+      drupal_goto( seamoon_otp_baseUrl('otp_key_login') );
+    }
 
-  // function
-
-  // check onload page if the users are keylogged
-  if ( $seamoon_otp_conf['active'] && !empty($seamoon_otp_conf['user_paired']) && $_COOKIE['seamoon_otp_key_logged'] != 'Y' && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 ) {
-    // Prepare the URL
-    $redirectTo = $domainProto . $domainUrl . '/' . $domainLang . 'otp_key_login';
-    // Redirect
-    drupal_goto($redirectTo);
-  }
-
-  // If the user is not paired and the pairing phase is mandatory, take the action below
-  if ( $seamoon_otp_conf['active'] && empty($seamoon_otp_conf['user_paired']) && $pairing == 'mandatory' && $user->uid > 1 && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 ) {
-    // Prepare the URL
-    $redirectTo = $domainProto . $domainUrl . '/' . $domainLang . 'otp_key';
-    // Redirect
-    drupal_goto($redirectTo);
+    // Redirect, if the user is not paired and the pairing phase is mandatory, take the action below
+    if ( $seamoon_otp_conf['pairing'] == 'mandatory' && empty($seamoon_otp_conf['user_paired']) ) {
+      drupal_goto( seamoon_otp_baseUrl('otp_key') );
+    }
   }
 
   // Reset nocache_otp cookie
-  if ( $_COOKIE['nocache_otp'] == '1' && $_COOKIE['seamoon_otp_key_logged'] == 'Y' ) {
+  if ( isset($_COOKIE['nocache_otp']) && $_COOKIE['seamoon_otp_key_logged'] == 'Y' ) {
     setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
   }
 }
@@ -177,57 +165,31 @@ function seamoon_otp_menu() {
  */
 function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
   // Define global variables
-  global $language, $seamoon_otp_conf;
+  global $language, $user, $seamoon_otp_conf;
   
   // Make switch for $op = operation
   switch ($op) {
     case 'load':
       break;
-    case 'update':
-      break;
-    case 'insert':
-      break;
-    case 'register':
-      break;
     case 'login':
-      // START check
-                  
-      $active = variable_get('seamoon_otp_active', FALSE);
-      $pairing = variable_get('seamoon_otp_pairing', FALSE);
-      $user_chkrole = seamoon_otp_chkrole($user->uid);
-      
-      //var_dump( $seamoon_otp_conf['user_paired'] ); exit;
 
-      // extract the real domain url from referer
-      //$domainparts = parse_url( !empty($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : $_SERVER["HTTP_HOST"] ); 
-      $domainparts = parse_url( $_SERVER["HTTP_HOST"] ); 
-      $domainUrl = empty($domainparts["host"]) ? $domainparts["path"] : $domainparts["host"];
+      // Check in onload page
+      if ( $seamoon_otp_conf['active'] && $seamoon_otp_conf['user_chkrole'] && $user->uid > 1 ) {
 
-      // If the mandatory pairing is mandatory procede to set a nocache_otp cookie
-      if ( ( $pairing == 'mandatory' && $active && $user_chkrole ) || ( $active && $user_chkrole && !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) ) {
-          setcookie('nocache_otp', '1', time() + ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
-      }
-      
-      // If the OTP Seamoon is active and user is already paired, take the action below
-      if ( $active && $user_chkrole && !empty($seamoon_otp_conf['user_paired']) && empty($_COOKIE['seamoon_otp_key_logged']) ) {
+        // If the OTP Seamoon is active and user is already paired, take the action below
+        if ( empty($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) {
+          drupal_goto( seamoon_otp_baseUrl('otp_key_login') );
+        }
 
-        $urlA = $language->language . '/otp_key_login';
-        $urlA = 'http://' . $domainUrl . '/' . $urlA;
+        // Redirect, if the user is not paired and the pairing phase is mandatory, take the action below
+        if ( $seamoon_otp_conf['pairing'] == 'mandatory' && empty($seamoon_otp_conf['user_paired']) ) {
+          drupal_goto( seamoon_otp_baseUrl('otp_key') );
+        }
 
-        // go to association page
-        drupal_goto($urlA); 
-
-      }
-
-      // If the user is not paired and the pairing phase is mandatory, take the action below
-      if ( $active && $user_chkrole && $pairing == 'mandatory' && empty($seamoon_otp_conf['user_paired']) && $account->uid != 1 ) {
-
-        //$urlB = base_path() . $seamoon_otp_conf['user_paired'] . '/otp_key';
-        $urlB = $seamoon_otp_conf['user_paired'] . '/otp_key';
-        $urlB = 'http://' . $domainUrl . '/' . $urlB;
-
-        // go to association page
-        drupal_goto($urlB);
+        // If the mandatory pairing is mandatory procede to set a nocache_otp cookie
+        if ( $seamoon_otp_conf['pairing'] == 'mandatory' || ( !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) ) {
+            setcookie('nocache_otp', '1', time() + ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
+        }
 
       }
 
@@ -416,6 +378,29 @@ function seamoon_otp_url_excluded() {
   
   // Return FALSE if no match
   return FALSE;
+}
+
+/**
+ * Make the base url for redirects
+ *
+ * @param string $path
+ * @return base url
+ */
+function seamoon_otp_baseUrl($path) {
+  // Define global variables
+  global $language;
+
+  // Extract URL elements from parse_url
+  $domparts = parse_url( $_SERVER["HTTP_HOST"] ); 
+  $domainUrl   = empty($domparts["host"]) ? $domparts["path"] : $domparts["host"];
+  $domainProto = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
+  $domainLang  = !empty($language->prefix) ? $language->prefix.'/' : '/';
+
+  // Prepare the URL
+  $baseUrl = $domainProto . $domainUrl . $domainLang . $path;
+
+  // Return the baseUrl
+  return $baseUrl;
 }
 
 /**
