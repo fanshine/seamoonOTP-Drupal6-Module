@@ -189,7 +189,9 @@ function seamoon_otp_list_keys() {
   
   $how_many_per_page = 50;
   
-  $query = "SELECT * FROM {users},{seamoon_otp_users} WHERE {seamoon_otp_users}.uid = {users}.uid ORDER BY {seamoon_otp_users}.uid ASC";
+  $query = "SELECT * FROM {users},{seamoon_otp_users} 
+            WHERE {seamoon_otp_users}.uid = {users}.uid 
+            ORDER BY {seamoon_otp_users}.uid ASC";
 
   $results = pager_query($query, $how_many_per_page);
   
@@ -253,7 +255,7 @@ function seamoon_otp_list_keys() {
  */
 function seamoon_otp_del_pair_confirm_form($form_state) {
   
-  //you can pass variables here if need be
+  // Pass variables
   $form['kid'] = array(
     '#type' => 'value',
     '#value' => arg(4),
@@ -263,7 +265,7 @@ function seamoon_otp_del_pair_confirm_form($form_state) {
     '#value' => arg(5),
   );
  
-  //you can set a redirect if needed
+  // Set a redirect
   $form['#redirect'] = 'admin/user/seamoon_otp/listkey';
  
   return confirm_form($form,
@@ -301,7 +303,6 @@ function seamoon_otp_del_pair_confirm_form_submit($form, &$form_state) {
       drupal_set_message( t('Some troubles with deleting pairing. Please, try again.'), 'error' );
 
     }
-  
+
   }
-  
 }

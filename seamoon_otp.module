@@ -176,24 +176,25 @@ function seamoon_otp_user($op, &$edit, &$account, $category = NULL) {
       // Check in onload page
       if ( $seamoon_otp_conf['active'] && $seamoon_otp_conf['user_chkrole'] && $user->uid > 1 ) {
 
-        // If the OTP Seamoon is active and user is already paired, take the action below
+        // If the OTP Seamoon is active and user is already paired, take the
+        // action below
         if ( empty($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) {
           drupal_goto( seamoon_otp_baseUrl('otp_key_login') );
         }
 
-        // Redirect, if the user is not paired and the pairing phase is mandatory, take the action below
+        // Redirect, if the user is not paired and the pairing phase is
+        // mandatory, take the action below
         if ( $seamoon_otp_conf['pairing'] == 'mandatory' && empty($seamoon_otp_conf['user_paired']) ) {
           drupal_goto( seamoon_otp_baseUrl('otp_key') );
         }
 
-        // If the mandatory pairing is mandatory procede to set a nocache_otp cookie
+        // If the pairing is mandatory procede to set a nocache_otp cookie
         if ( $seamoon_otp_conf['pairing'] == 'mandatory' || ( !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) ) {
             setcookie('nocache_otp', '1', time() + ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
         }
 
       }
 
-      // END check
       break;
     case 'logout':
       

@@ -86,7 +86,8 @@ function seamoon_otp_install() {
  */
 function seamoon_otp_uninstall() {
   // Drop my tables.
-  // Take care of uninstall phase, because we can erase all associations between users and our serials key
+  // Take care of uninstall phase, because we can erase all associations between
+  // users and our serials key
   drupal_uninstall_schema('seamoon_otp'); 
   drupal_set_message(t('The "Seamoon KeyGenerator OTP" tables have been removed from the database'));
   //variable_del('something');

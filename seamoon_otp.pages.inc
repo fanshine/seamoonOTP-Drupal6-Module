@@ -8,7 +8,7 @@
  * Seamoon Keys page form
  */
 function seamoon_otp_key_pair_form($form_value) {
-    
+  // Define global variables
   global $user, $seamoon_otp_conf;
 
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
@@ -79,10 +79,10 @@ function seamoon_otp_key_pair_form($form_value) {
  */
 function seamoon_otp_key_pair_form_validate($form, &$form_state) {
   // Define global variables
-  global $_GET, $user, $_SERVER, $language;
+  global $user, $language;
 
   // Set errors variable
-  $errors = '';
+  $errors = null;
   
   // Serial Number from user form
   $sn_fid = $form['seamoon_otp_key_pair']['serial_number'];
@@ -129,8 +129,9 @@ function seamoon_otp_key_pair_form_validate($form, &$form_state) {
     $errors+=1;
   } 
 
-  // CHECK if the new association serial_key|sn_info is valid using the seamoon API
-  if (empty($errors)) {
+  // CHECK if the new association serial_key|sn_info is valid using the 
+  // seamoon API
+  if (is_null($errors)) {
 
     // Require the Seamoon PHP SDK only in certain case
     require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
@@ -163,8 +164,8 @@ function seamoon_otp_key_pair_form_validate($form, &$form_state) {
  * Seamoon Key page form submit
  */
 function seamoon_otp_key_pair_form_submit($elements, &$form_state, $form_id = NULL) {
-    
-  global $_GET, $_SERVER, $language, $user;
+  // Define global variables    
+  global $language, $user;
 
   // Serial Number from user form
   $sn_fid = $elements['seamoon_otp_key_pair']['serial_number'];
@@ -211,8 +212,8 @@ function seamoon_otp_key_pair_form_submit($elements, &$form_state, $form_id = NU
  * Seamoon Key page form
  */
 function seamoon_otp_key_paired($form_state) {
-  
-  global $conf, $language;
+  // Define global variables  
+  global $language;
 
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
   drupal_add_js(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.js');
@@ -227,12 +228,11 @@ function seamoon_otp_key_paired($form_state) {
   
   $msg = drupal_get_messages();
   
-  // in case of old error messages from hook_submit, transfer user again on the first page of key pair
+  // in case of old error messages from hook_submit, transfer user again on
+  // the first page of key pair
   if ( !empty( $msg ) ) {
-        
     drupal_set_message( t('Some troubles. Please, try again.'), 'error' );
     drupal_goto('otp_key');
-
   }
   
   // If no errors exist, logout the user
@@ -283,7 +283,7 @@ function seamoon_otp_key_paired($form_state) {
  * Seamoon Keys page login form
  */
 function seamoon_otp_key_login_form($form_value) {
-    
+  // Define global variables    
   global $user;
 
   drupal_add_css(drupal_get_path('module', 'seamoon_otp') .'/seamoon_otp.css');
@@ -325,25 +325,25 @@ function seamoon_otp_key_login_form($form_value) {
  * Seamoon Key page login form validate
  */
 function seamoon_otp_key_login_form_validate($form, &$form_state) {
-    
-  global $_GET, $user, $_SERVER, $language;
+  // Define global variables    
+  global $user, $language;
+
+  // Set errors variable
+  $errors = null;
     
   $otp_key = $form['seamoon_otp_login_key']['otp_code'];
   $otp_nam = $otp_key['#title'];
   $otp_val = preg_replace('/\s+/', '', $form_state['values']['otp_code']);
   
-  //var_dump($otp_key);
-  
   // Validate otp fields
   if ( !empty($otp_val) && ( strlen($otp_val) < 3 || !is_numeric($otp_val) ) ) {
-
     form_error($otp_key, t('You must enter a %s field correctly.', array('%s' => $otp_nam)) );
     $errors+=1;
-
   }
   
-  /* CHECK if the new association serial_key|sn_info is valid using the seamoon API */  
-  if (empty($errors)) {
+  // CHECK if the new association serial_key|sn_info is valid using the
+  // seamoon API
+  if (is_null($errors)) {
 
     // Require the Seamoon PHP SDK only in certain case
     require_once dirname(__FILE__) . '/phpsdk/seamoonapi.php';
@@ -352,14 +352,12 @@ function seamoon_otp_key_login_form_validate($form, &$form_state) {
     
     // Serial Key Info from query sql
     $sn_info = seamoon_otp_get_user_sn_info($user->uid);
-    $sn_kid = $sn_info->serial_number;
-    $sn_key = $sn_info->serial_number_key;
+    $sn_kid = isset($sn_info->serial_number) ? $sn_info->serial_number : null;
+    $sn_key = isset($sn_info->serial_number_key) ? $sn_info->serial_number_key : null;
 
     // Serial Number Key validation
     $result = $key->passwordsyn($sn_key, $otp_val);
 
-    //var_dump($result); exit;
-        
     if( strlen($result) < 3 ) {
     
         form_error($otp_key, t('The %field inserted is not correct.', array('%field' => $otp_nam)) );
@@ -375,7 +373,6 @@ function seamoon_otp_key_login_form_validate($form, &$form_state) {
     }
 
   }
-  /* END CHECKing */
   
   return $form;
 
@@ -385,8 +382,8 @@ function seamoon_otp_key_login_form_validate($form, &$form_state) {
  * Seamoon Key page form submit
  */
 function seamoon_otp_key_login_form_submit($elements, &$form_state, $form_id = NULL) {
-    
-  global $_GET, $_SERVER, $language, $user;
+  // Define global variables    
+  global $language, $user;
 
   $lang = $language->language;
   
@@ -398,14 +395,10 @@ function seamoon_otp_key_login_form_submit($elements, &$form_state, $form_id = N
   $otp_key = $elements['seamoon_otp_login_key']['otp_code'];
   $otp_nam = $otp_key['#title'];
   
-  //var_dump($otp_nam); exit;
-
   // Store the new Serial Number Key validated in sql table
   $queryUpdSnKey = db_query("UPDATE {seamoon_otp_sn} SET serial_number_key = '%s' WHERE {seamoon_otp_sn}.serial_number = '%d';", array('%s' => $sn_key, '%d' => $sn_kid) );
   
-  //var_dump($queryUpdSnKey); exit;
-  
-  // if updating of sn key is good, continue with transferring user on page logged
+  // if updating of sn key is good, transferring user on page logged
   if ($queryUpdSnKey) {
     
     // Set cookie to store in the cookie that the user is connected correctly
@@ -413,11 +406,7 @@ function seamoon_otp_key_login_form_submit($elements, &$form_state, $form_id = N
     
     // Reset nocache_otp cookie
     if (isset($_COOKIE['nocache_otp'])) {
-        
-        //var_dump($_COOKIE['nocache_otp']); exit;
-    
         setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
-    
     }
     
     // Take URL redirection from settings
@@ -437,5 +426,4 @@ function seamoon_otp_key_login_form_submit($elements, &$form_state, $form_id = N
     drupal_set_message( t('Some troubles with %field inserted. Please, try again.', array('%field' => $otp_nam)), 'error' );
 
   }
-
 }
