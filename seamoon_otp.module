@@ -55,24 +55,26 @@ function seamoon_otp_init() {
   );
 
   // Define variables for checking
-  $excluded = ( seamoon_otp_url_excluded() !== FALSE ) ? 1 : 0;
+  $excluded = (seamoon_otp_url_excluded() !== FALSE) ? 1 : 0;
+  $nocache_otp = isset($_COOKIE['nocache_otp']) ? true : false;
+  $seamoon_otp_key_logged = (isset($_COOKIE['seamoon_otp_key_logged']) && $_COOKIE['seamoon_otp_key_logged'] == 'Y') ? true : false;
 
   // Check in onload page
   if ( $seamoon_otp_conf['active'] && $seamoon_otp_conf['user_chkrole'] && $excluded == 0 && $user->uid > 1 ) {
 
     // Redirect, if the users are keylogged
-    if ( !isset($_COOKIE['seamoon_otp_key_logged']) && !empty($seamoon_otp_conf['user_paired']) ) {
+    if ( !isset($_COOKIE['seamoon_otp_key_logged']) && !$seamoon_otp_conf['user_paired'] ) {
       drupal_goto( seamoon_otp_baseUrl('otp_key_login') );
     }
 
     // Redirect, if the user is not paired and the pairing phase is mandatory, take the action below
-    if ( $seamoon_otp_conf['pairing'] == 'mandatory' && empty($seamoon_otp_conf['user_paired']) ) {
+    if ( $seamoon_otp_conf['pairing'] == 'mandatory' && $seamoon_otp_conf['user_paired'] ) {
       drupal_goto( seamoon_otp_baseUrl('otp_key') );
     }
   }
 
   // Reset nocache_otp cookie
-  if ( isset($_COOKIE['nocache_otp']) && $_COOKIE['seamoon_otp_key_logged'] == 'Y' ) {
+  if ( $nocache_otp && $seamoon_otp_key_logged ) {
     setcookie('nocache_otp', "", time() - 86400, ini_get('session.cookie_path'), ini_get('session.cookie_domain'), ini_get('session.cookie_secure') == '1');
   }
 }
