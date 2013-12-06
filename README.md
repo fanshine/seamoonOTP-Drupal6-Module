@@ -11,3 +11,7 @@ Product page of KingKey 3000: http://www.seamoon.com.cn/key3000_en.asp
 IMPORTANT
 ===========
 Don't use in production at moment.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/xdemocle/seamoonotp-drupal6-module/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
